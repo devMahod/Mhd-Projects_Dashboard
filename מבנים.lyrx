@@ -1,0 +1,402 @@
+{
+  "type" : "CIMLayerDocument",
+  "version" : "3.6.0",
+  "build" : 59527,
+  "layers" : [
+    "CIMPATH=cd79fd5074a9453480cb0e650f726912.json"
+  ],
+  "layerDefinitions" : [
+    {
+      "type" : "CIMIndexedSceneLayer",
+      "name" : "מבנים",
+      "uRI" : "CIMPATH=cd79fd5074a9453480cb0e650f726912.json",
+      "sourceModifiedTime" : {
+        "type" : "TimeInstant"
+      },
+      "useSourceMetadata" : true,
+      "description" : "overture 2026-03-18.0, builder v1.31 | The Esri 3D Buildings scene layer currently includes commercial 3D buildings acquired from TomTom and Vantor, in addition to Esri Community Maps data.  The Esri 3D Buildings scene layer is intended as an alternative to the OpenStreetMap (OSM) 3D Buildings scene layer, particularly for areas where the OSM data is missing accurate 3D attributes.",
+      "layerElevation" : {
+        "type" : "CIMLayerElevationSurface",
+        "elevationSurfaceLayerURI" : "CIMPATH=8db5469abd494d459d99e054fbc03d81.json"
+      },
+      "layer3DProperties" : {
+        "type" : "CIM3DLayerProperties",
+        "castShadows" : true,
+        "isLayerLit" : true,
+        "layerFaceCulling" : "None",
+        "maxDistance" : -1,
+        "minDistance" : -1,
+        "preloadTextureCutoffHigh" : 0,
+        "preloadTextureCutoffLow" : 0.25,
+        "textureCutoffHigh" : 0.25,
+        "textureCutoffLow" : 1,
+        "useCompressedTextures" : true,
+        "verticalExaggeration" : 1,
+        "exaggerationMode" : "ScaleZ",
+        "verticalUnit" : {
+          "uwkid" : 9001
+        },
+        "lighting" : "OneSideDataNormal",
+        "optimizeMarkerTransparency" : true,
+        "enable2DSymbolPerspectiveScaling" : true
+      },
+      "layerType" : "BasemapBackground",
+      "showLegends" : true,
+      "visibility" : true,
+      "displayCacheType" : "Permanent",
+      "maxDisplayCacheAge" : 5,
+      "popupInfo" : {
+        "type" : "CIMPopupInfo",
+        "title" : "Esri 3D Buildings",
+        "expressionInfos" : [
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "Name",
+            "expression" : "decode($feature.OSMType, 3, '', $feature['name'] )",
+            "name" : "osm_name",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "Building",
+            "expression" : "decode($feature.OSMType, 3, '', $feature['building'] )",
+            "name" : "osm_building",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "Height",
+            "expression" : "decode($feature.OSMType, 3, '', 4, '', Text($feature['height'], '#,##0.###'))",
+            "name" : "osm_height",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "Levels",
+            "expression" : "decode($feature.OSMType, 3, '', 4, '', Text($feature['building_levels'], '#,##0.###'))",
+            "name" : "osm_building_levels",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "source",
+            "expression" : "decode($feature.OSMType, 3, '', $feature['source'] )",
+            "name" : "osm_source",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "feature_url",
+            "expression" : "decode($feature.OSMType,0,'way/' + $feature['OSMID'],1,'relation/' + $feature['OSMID'],2,'MS','?')",
+            "name" : "feature_url",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "aggregated_message",
+            "expression" : "decode($feature.OSMType,3,'Aggregated buildings at a low level of detail.','')",
+            "name" : "aggregated_message",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "view_this_feature",
+            "expression" : "decode($feature.OSMType,2,'',3,'', 4, '', 'View this feature')",
+            "name" : "view_this_feature",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "edit_this_feature",
+            "expression" : "decode($feature.OSMType,2,'',3,'', 4, '', 'Edit this feature')",
+            "name" : "edit_this_feature",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "in_osm",
+            "expression" : "decode($feature.OSMType,2,'',3,'',4,'','in OpenStreetMap')",
+            "name" : "in_osm",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "name_header",
+            "expression" : "decode($feature.name,'','','Name')",
+            "name" : "name_header",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "name",
+            "expression" : "decode($feature.name,'','',$feature['name'])",
+            "name" : "name",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "building_header",
+            "expression" : "decode($feature.building,'unknown','','Building')",
+            "name" : "building_header",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "building",
+            "expression" : "decode($feature.building,'unknown','',$feature['building'])",
+            "name" : "building",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "height_header",
+            "expression" : "decode($feature.OSMType, 3, '', 4, '', 'Height')",
+            "name" : "height_header",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "height",
+            "expression" : "decode($feature.OSMType, 3, '', 4, '', Text(Round($feature['height'], 2)))",
+            "name" : "height",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "levels_header",
+            "expression" : "decode($feature.OSMType, 3, '', 4, '', decode($feature['building_levels'], 0, '', 'Levels'))",
+            "name" : "levels_header",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "levels",
+            "expression" : "decode($feature.OSMType, 3, '', 4, '', decode($feature['building_levels'], 0, '', $feature['building_levels']))",
+            "name" : "levels",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "name_style",
+            "expression" : "decode($feature.name,'','display:none','')",
+            "name" : "name_style",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "bldg_style",
+            "expression" : "decode($feature.building,'unknown','display:none', '')",
+            "name" : "bldg_style",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "height_style",
+            "expression" : "decode($feature.OSMType, 3, 'display:none', 4, 'display:none', '')",
+            "name" : "height_style",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "level_style",
+            "expression" : "decode($feature.OSMType, 3, 'display:none', 4, 'display:none', decode($feature['building_levels'], 0, 'display:none', ''))",
+            "name" : "level_style",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_copyright_osm",
+            "expression" : "decode($feature.SrcID, 1, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_copyright_osm",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_copyright_esri",
+            "expression" : "decode($feature.SrcID, 2, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_copyright_esri",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_copyright_google",
+            "expression" : "decode($feature.SrcID, 3, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_copyright_google",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_copyright_ms",
+            "expression" : "decode($feature.SrcID, 4, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_copyright_ms",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_copyright_tomtom",
+            "expression" : "decode($feature.SrcID, 14, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_copyright_tomtom",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_copyright_vantor",
+            "expression" : "decode($feature.SrcID, 15, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_copyright_vantor",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_call_to_action1",
+            "expression" : "decode($feature.SrcID, 1, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 2, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 3, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 4, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 14, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 15, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_call_to_action1",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_call_to_action2",
+            "expression" : "decode($feature.SrcID, 2, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 3, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 4, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 14, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 15, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_call_to_action2",
+            "returnType" : "String"
+          },
+          {
+            "type" : "CIMExpressionInfo",
+            "title" : "show_call_to_action3",
+            "expression" : "decode($feature.SrcID, 1, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 3, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 4, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 14, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 15, 'padding-left: 0px; padding-top: 0px; padding-bottom: 0px;', 'display:none')",
+            "name" : "show_call_to_action3",
+            "returnType" : "String"
+          }
+        ],
+        "mediaInfos" : [
+          {
+            "type" : "CIMTextMediaInfo",
+            "refreshRateUnit" : "esriTimeUnitsSeconds",
+            "rowSpan" : 1,
+            "columnSpan" : 1,
+            "text" : "<figure class=\"table\"><table style=\"empty-cells:hide\" class=\"esri-widget__table\" summary=\"List of attributes and values\"><tbody><tr style=\"{expression/name_style}\"><td class=\"esri-feature-fields__field-header\">{expression/name_header}</td><td class=\"esri-feature-fields__field-data\">{expression/name}</td></tr><tr style=\"{expression/bldg_style}\"><td class=\"esri-feature-fields__field-header\">{expression/building_header}</td><td class=\"esri-feature-fields__field-data\">{expression/building}</td></tr><tr style=\"{expression/height_style}\"><td class=\"esri-feature-fields__field-header\">{expression/height_header}</td><td class=\"esri-feature-fields__field-data\">{expression/height}</td></tr><tr style=\"{expression/level_style}\"><td class=\"esri-feature-fields__field-header\">{expression/levels_header}</td><td class=\"esri-feature-fields__field-data\">{expression/levels}</td></tr></tbody></table></figure><p style=\"margin-top:10px;\"><a href=https://www.openstreetmap.org/{expression/feature_url} target=\"_blank\" rel=\"nofollow ugc\">{expression/view_this_feature}</a>&nbsp;{expression/in_osm}<br><a href=https://www.openstreetmap.org/edit?{expression/feature_url} target=\"_blank\" rel=\"nofollow ugc\">{expression/edit_this_feature}</a>&nbsp;{expression/in_osm}<br><span style=\"font-weight:bold;\">{expression/aggregated_message} </span><div style=\"{expression/show_copyright_osm}\"><span style=\"font-weight:bold;\">Data &copy; OpenStreetMap contributors</span><p style=\"margin-top:10px;\"></div><div style=\"{expression/show_copyright_esri}\"><span style=\"font-weight:bold;\">Data by Esri Community Maps Contributors</span><p style=\"margin-top:10px;\"></div><div style=\"{expression/show_copyright_google}\"><span style=\"font-weight:bold;\">Data by Google Open Buildings</span><p style=\"margin-top:10px;\"></div><div style=\"{expression/show_copyright_ms}\"><span style=\"font-weight:bold;\">Data by Microsoft ML Buildings</span><p style=\"margin-top:10px;\"></div><div style=\"{expression/show_copyright_tomtom}\"><span style=\"font-weight:bold;\">Data &copy; TomTom</span><p style=\"margin-top:10px;\"></div><div style=\"{expression/show_copyright_vantor}\"><span style=\"font-weight:bold;\">Data &copy; Vantor</span><p style=\"margin-top:10px;\"></div><div style=\"{expression/show_call_to_action1}\"><a href=\"https://www.esri.com/arcgis-blog/products/arcgis-living-atlas/announcements/enhanced-3d-layers-in-arcgis/\">Learn about Esri 3D Buildings Layer</a></div><div style=\"{expression/show_call_to_action2}\"><a href=\"https://www.esri.com/arcgis-blog/products/arcgis-online/mapping/help-enhance-new-3d-basemaps/\">Contribute to Esri Community Maps</a></div><div style=\"{expression/show_call_to_action3}\"><a href=\"https://www.esri.com/arcgis-blog/products/arcgis-living-atlas/mapping/contributing-gis-data-to-openstreetmap/\">Contribute to OpenStreetMap</a></div>"
+          }
+        ],
+        "gridLayout" : {
+          "type" : "CIMPopupLayout",
+          "columnWidths" : [
+            100
+          ],
+          "borderWidth" : 0,
+          "borderColor" : {
+            "type" : "CIMRGBColor",
+            "values" : [
+              0,
+              0,
+              0,
+              100
+            ]
+          }
+        }
+      },
+      "showPopups" : false,
+      "serviceLayerID" : -1,
+      "refreshRate" : -1,
+      "refreshRateUnit" : "esriTimeUnitsSeconds",
+      "webMapLayerID" : "187e902e9f5-layer-117",
+      "blendingMode" : "Alpha",
+      "allowDrapingOnIntegratedMesh" : true,
+      "snappable" : true,
+      "renderer" : {
+        "type" : "CIMSimpleRenderer",
+        "sampleSize" : 10000,
+        "patch" : "Default",
+        "symbol" : {
+          "type" : "CIMSymbolReference",
+          "symbol" : {
+            "type" : "CIMMeshSymbol",
+            "symbolLayers" : [
+              {
+                "type" : "CIMMaterialSymbolLayer",
+                "enable" : true,
+                "color" : {
+                  "type" : "CIMRGBColor",
+                  "values" : [
+                    255,
+                    255,
+                    255,
+                    100
+                  ]
+                },
+                "materialMode" : "Replace"
+              }
+            ]
+          }
+        }
+      },
+      "featureElevationExpression" : "Shape.Z",
+      "dataConnection" : {
+        "type" : "CIMAGSServiceConnection",
+        "objectName" : "Esri3D_Buildings_v1",
+        "objectType" : "SceneServer",
+        "url" : "https://basemaps3d.arcgis.com/arcgis/rest/services/Esri3D_Buildings_v1/SceneServer/layers/0",
+        "serverConnection" : {
+          "type" : "CIMInternetServerConnection",
+          "anonymous" : true,
+          "hideUserProperty" : true,
+          "url" : "https://basemaps3d.arcgis.com/arcgis/rest/services/Esri3D_Buildings_v1/SceneServer/layers/0"
+        }
+      },
+      "indexedSceneLayerType" : "Object3D",
+      "selectable" : true,
+      "modificationLayerEnabled" : true,
+      "usePredefinedMaxScreenThreshold" : true
+    }
+  ],
+  "elevationSurfaceLayerDefinitions" : [
+    {
+      "type" : "CIMElevationSurfaceLayer",
+      "name" : "Ground",
+      "uRI" : "CIMPATH=8db5469abd494d459d99e054fbc03d81.json",
+      "sourceModifiedTime" : {
+        "type" : "TimeInstant"
+      },
+      "useSourceMetadata" : true,
+      "description" : "Ground",
+      "expanded" : true,
+      "layer3DProperties" : {
+        "type" : "CIM3DLayerProperties",
+        "castShadows" : true,
+        "isLayerLit" : true,
+        "layerFaceCulling" : "None",
+        "preloadTextureCutoffHigh" : 0.29999999999999999,
+        "preloadTextureCutoffLow" : 0.59999999999999998,
+        "textureCutoffHigh" : 0.29999999999999999,
+        "textureCutoffLow" : 0.59999999999999998,
+        "useCompressedTextures" : true,
+        "verticalExaggeration" : 1,
+        "exaggerationMode" : "ScaleZ",
+        "lighting" : "OneSideDataNormal",
+        "optimizeMarkerTransparency" : true
+      },
+      "layerType" : "Operational",
+      "showLegends" : false,
+      "visibility" : true,
+      "displayCacheType" : "Permanent",
+      "maxDisplayCacheAge" : 5,
+      "showPopups" : true,
+      "serviceLayerID" : -1,
+      "refreshRate" : -1,
+      "refreshRateUnit" : "esriTimeUnitsSeconds",
+      "blendingMode" : "Alpha",
+      "allowDrapingOnIntegratedMesh" : true,
+      "elevationMode" : "BaseGlobeSurface",
+      "verticalExaggeration" : 1,
+      "color" : {
+        "type" : "CIMRGBColor",
+        "values" : [
+          255,
+          255,
+          255,
+          0
+        ]
+      },
+      "enableSurfaceShading" : true,
+      "surfaceTINShadingMode" : "Smooth"
+    }
+  ]
+}

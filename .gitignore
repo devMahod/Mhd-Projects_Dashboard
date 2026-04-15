@@ -1,0 +1,34 @@
+# Large ortho/aerial photos (ECW format)
+*.ecw
+*.ERS
+*.ers
+
+# Ortho tiles folder (large PNG tiles)
+ortho_tiles/
+
+# Lock files from ArcGIS
+*.sr.lock
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Temp inspection files
+inspect_all.txt
+inspect_shapefiles.py
+bezeq_sample.txt
+plan_sample.txt
+land_use_sample.txt
+mavat_codes.txt
+data_values.txt
+check_translated.txt
+remaining_clients.txt
+still_english.txt
+problem_clients.txt
+final_check.txt
+
+# Old unused files
+605-0150086.*
+
+# .claude metadata
+.claude/

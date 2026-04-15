@@ -77,8 +77,8 @@ def convert_shapefile(path, encoding="cp1255", skip_fields=None):
     return {"type": "FeatureCollection", "features": features}
 
 # ── Convert project boundaries ───────────────────────────────────────
-print("Converting PRJ_SHP_Merge...")
-projects = convert_shapefile(f"{BASE}/PRJ_SHP_Merge", encoding="utf-8")
+print("Converting ALL_ID_SHP (project boundaries)...")
+projects = convert_shapefile(f"{BASE}/ALL_ID_SHP", encoding="utf-8")
 print(f"  {len(projects['features'])} projects")
 
 # ── Convert statutory plans ──────────────────────────────────────────
@@ -296,6 +296,14 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:v
 .panel-left .info-row{gap:8px;align-items:flex-start;}
 .panel-left .info-label{flex-shrink:0;white-space:nowrap;}
 .panel-left .info-value{max-width:none;flex:1;text-align:left;word-break:break-word;}
+.mavat-filter-item{
+    display:flex;align-items:center;gap:8px;padding:5px 8px;font-size:12px;
+    cursor:pointer;border-radius:6px;transition:all 0.15s;
+    border:2px solid transparent;user-select:none;
+}
+.mavat-filter-item:hover{background:var(--hover);}
+.mavat-filter-item.active{background:rgba(192,132,252,0.12);border-color:#c084fc;box-shadow:0 0 0 1px rgba(192,132,252,0.3);}
+.mavat-check{display:none;}
 .no-selection{color:#64748b;font-size:13px;text-align:center;padding:30px 0;}
 
 /* Categories */
@@ -604,7 +612,6 @@ function refresh3DLayers() {
                     <div class="ir"><span class="il">\u05e1\u05d8\u05d8\u05d5\u05e1:</span><span class="iv">${p.Status||''}</span></div>
                     <div class="ir"><span class="il">\u05ea\u05d0\u05e8\u05d9\u05da \u05d4\u05ea\u05d7\u05dc\u05d4:</span><span class="iv">${p.Start_Date||''}</span></div>
                     <div class="ir"><span class="il">\u05ea\u05d0\u05e8\u05d9\u05da \u05e1\u05d9\u05d5\u05dd:</span><span class="iv">${p.End_Date||''}</span></div>
-                    <div class="ir"><span class="il">\u05e9\u05d8\u05d7:</span><span class="iv">${formatA(p.Shape_Area)}</span></div>
                 </div>`;
         }
     };
@@ -636,7 +643,11 @@ function refresh3DLayers() {
     statutoryGraphicsLayer.removeAll();
     const statChecked = document.querySelector('[data-cat="statutory"]').checked;
     if (statChecked && selectedProjectId) {
-        const projFeats = statutoryData.features.filter(f => String(f.properties.Prj_ID_MHD) === String(selectedProjectId));
+        const projFeats = statutoryData.features.filter(f => {
+            if (String(f.properties.Prj_ID_MHD) !== String(selectedProjectId)) return false;
+            if (mavatFilterCodes.size > 0 && !mavatFilterCodes.has(String(f.properties.MAVAT_CODE))) return false;
+            return true;
+        });
         const statPopupTemplate = {
             title: '',
             content: function(feature) {
@@ -856,8 +867,6 @@ function selectProject(workNo) {
         <div class="info-row"><span class="info-label">\u05e1\u05d8\u05d8\u05d5\u05e1:</span><span class="info-value">${p.Status||''}</span></div>
         <div class="info-row"><span class="info-label">\u05ea\u05d0\u05e8\u05d9\u05da \u05d4\u05ea\u05d7\u05dc\u05d4:</span><span class="info-value">${p.Start_Date||''}</span></div>
         <div class="info-row"><span class="info-label">\u05ea\u05d0\u05e8\u05d9\u05da \u05e1\u05d9\u05d5\u05dd:</span><span class="info-value">${p.End_Date||''}</span></div>
-        <div class="info-row"><span class="info-label">\u05e9\u05d8\u05d7:</span><span class="info-value">${formatArea(p.Shape_Area)}</span></div>
-        <div class="info-row"><span class="info-label">\u05d4\u05d9\u05e7\u05e3:</span><span class="info-value">${p.Shape_Leng ? p.Shape_Leng.toFixed(0)+' \u05de\u05d8\u05e8' : '-'}</span></div>
     `;
 
     // Update list active state
@@ -984,6 +993,8 @@ function makeStatutoryPopup(p) {
     `;
 }
 
+let mavatFilterCodes = new Set(); // empty = show all, otherwise filter by these codes
+
 function updateStatutory() {
     if (statutoryLayer) { map.removeLayer(statutoryLayer); statutoryLayer = null; }
     const leftPanel = document.querySelector('.panel-left');
@@ -992,18 +1003,24 @@ function updateStatutory() {
 
     if (!statChecked || !selectedProjectId) {
         leftPanel.innerHTML = '<div class="placeholder">בחר פרויקט וסמן \"סטטוטוריקה\" כדי לראות מידע התכנית</div>';
+        mavatFilterCodes = new Set();
         return;
     }
 
-    // Filter polygons for this project
-    const projectFeats = statutoryData.features.filter(f => {
+    // All cells for this project
+    const allProjectFeats = statutoryData.features.filter(f => {
         return String(f.properties.Prj_ID_MHD) === String(selectedProjectId);
     });
 
-    if (projectFeats.length === 0) {
+    if (allProjectFeats.length === 0) {
         leftPanel.innerHTML = '<div class="placeholder">אין מידע סטטוטורי לפרויקט זה</div>';
         return;
     }
+
+    // Apply MAVAT filter if active
+    const projectFeats = mavatFilterCodes.size > 0
+        ? allProjectFeats.filter(f => mavatFilterCodes.has(String(f.properties.MAVAT_CODE)))
+        : allProjectFeats;
 
     // Render polygons on map - colored per MAVAT code (from ArcGIS Pro LYRX)
     statutoryLayer = L.geoJSON({type:'FeatureCollection',features:projectFeats}, {
@@ -1039,28 +1056,49 @@ function updateStatutory() {
                 <div class="info-row"><span class="info-label">\u05de\u05e1\u05e4\u05e8 \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8:</span><span class="info-value">${plan.Prj_ID_MHD||''}</span></div>
                 <div class="info-row" style="margin-top:8px;border-top:1px solid #334155;padding-top:6px;"><span class="info-label">\u05ea\u05d0\u05d9 \u05e9\u05d8\u05d7:</span><span class="info-value">${projectFeats.length}</span></div>
             </div>
-            <div class="panel-title" style="margin-top:10px;">\u05de\u05e7\u05e8\u05d0 \u05d9\u05e2\u05d5\u05d3\u05d9\u05dd</div>
+            <div class="panel-title" style="margin-top:10px;">\u05e1\u05d9\u05e0\u05d5\u05df \u05dc\u05e4\u05d9 \u05d9\u05e2\u05d5\u05d3</div>
             <div class="info-card" id="mavat-legend"></div>
         `;
 
-        // Build legend - unique MAVAT codes in this project
+        // Build legend from ALL cells in project (not just filtered)
         const usedCodes = {};
-        projectFeats.forEach(f => {
+        allProjectFeats.forEach(f => {
             const c = String(f.properties.MAVAT_CODE);
             if (!usedCodes[c]) usedCodes[c] = {name: f.properties.MAVAT_NAME, count: 0};
             usedCodes[c].count++;
         });
-        const legendHtml = Object.entries(usedCodes)
+        const allItem = `<div class="mavat-filter-item ${mavatFilterCodes.size===0?'active':''}" data-code="">
+            <span style="width:14px;height:14px;background:linear-gradient(45deg,#c084fc,#38bdf8);border-radius:3px;flex-shrink:0;border:1px solid var(--border);"></span>
+            <span style="flex:1;color:var(--text);font-weight:600;">\u05db\u05dc \u05d4\u05d9\u05e2\u05d5\u05d3\u05d9\u05dd</span>
+            <span style="color:var(--text-dim);font-size:11px;">${allProjectFeats.length}</span>
+        </div>`;
+        const legendHtml = allItem + Object.entries(usedCodes)
             .sort((a,b) => b[1].count - a[1].count)
             .map(([code,info]) => {
                 const color = getMavatColor(code);
-                return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;">
-                    <span style="width:14px;height:14px;background:${color};border-radius:3px;flex-shrink:0;border:1px solid #334155;"></span>
-                    <span style="flex:1;color:#e2e8f0;">${info.name}</span>
-                    <span style="color:#94a3b8;font-size:11px;">${info.count}</span>
+                const isActive = mavatFilterCodes.has(code);
+                return `<div class="mavat-filter-item ${isActive?'active':''}" data-code="${code}">
+                    <span style="width:14px;height:14px;background:${color};border-radius:3px;flex-shrink:0;border:1px solid var(--border);"></span>
+                    <span style="flex:1;color:var(--text);">${info.name}</span>
+                    <span style="color:var(--text-dim);font-size:11px;">${info.count}</span>
                 </div>`;
             }).join('');
         document.getElementById('mavat-legend').innerHTML = legendHtml;
+
+        // Attach click handlers for filter items - toggle multi-select
+        document.querySelectorAll('.mavat-filter-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const code = el.dataset.code;
+                if (!code) {
+                    // "All" clicked - clear filter
+                    mavatFilterCodes = new Set();
+                } else {
+                    if (mavatFilterCodes.has(code)) mavatFilterCodes.delete(code);
+                    else mavatFilterCodes.add(code);
+                }
+                updateStatutory();
+            });
+        });
     }
 }
 

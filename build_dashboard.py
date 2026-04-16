@@ -13,8 +13,10 @@ OUT_HTML = f"{BASE}/dashboard.html"
 transformer = Transformer.from_crs("EPSG:2039", "EPSG:4326", always_xy=True)
 
 # ── Helper: read logo as base64 ──────────────────────────────────────
+with open(f"{BASE}/Mahod - Logo - white.png", "rb") as f:
+    logo_dark_b64 = base64.b64encode(f.read()).decode("ascii")
 with open(f"{BASE}/Group-184502@2x.png", "rb") as f:
-    logo_b64 = base64.b64encode(f.read()).decode("ascii")
+    logo_light_b64 = base64.b64encode(f.read()).decode("ascii")
 
 # ── Helper: convert shapes ───────────────────────────────────────────
 def convert_shapefile(path, encoding="cp1255", skip_fields=None):
@@ -77,8 +79,8 @@ def convert_shapefile(path, encoding="cp1255", skip_fields=None):
     return {"type": "FeatureCollection", "features": features}
 
 # ── Convert project boundaries ───────────────────────────────────────
-print("Converting ALL_ID_SHP (project boundaries)...")
-projects = convert_shapefile(f"{BASE}/ALL_ID_SHP", encoding="utf-8")
+print("Converting PRJ_SHP (project boundaries)...")
+projects = convert_shapefile(f"{BASE}/PRJ_SHP", encoding="utf-8")
 print(f"  {len(projects['features'])} projects")
 
 # ── Convert statutory plans ──────────────────────────────────────────
@@ -209,6 +211,7 @@ html = r"""<!DOCTYPE html>
 <title>Mahod - Projects Dashboard</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css">
 <script src="https://js.arcgis.com/4.30/"></script>
 <style>
@@ -232,6 +235,9 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:v
 }
 .navbar-right{display:flex;align-items:center;gap:12px;}
 .navbar-logo{height:38px;}
+.logo-light{display:none;}
+body.light .logo-dark{display:none;}
+body.light .logo-light{display:inline;}
 .navbar-left{display:flex;gap:8px;align-items:center;}
 .stat-box{text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 14px;}
 .theme-toggle{
@@ -247,12 +253,10 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:v
 .stat-label{font-size:10px;color:var(--text-dim);margin-top:1px;}
 
 /* ── Layout ─────────────────────────────────────────── */
-.main{display:grid;grid-template-columns:var(--left-w,380px) 1fr 320px;height:calc(100vh - 60px);direction:ltr;}
+.main{display:grid;grid-template-columns:380px 1fr 320px;height:calc(100vh - 60px);direction:ltr;}
 .panel-left{grid-column:1;}
 .map-container{grid-column:2;}
 .main>.panel{grid-column:3;}
-.main.no-left{--left-w:0px;}
-.main.no-left .panel-left{display:none;}
 .panel-left{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;direction:rtl;}
 .panel-left .placeholder{color:#475569;font-size:13px;text-align:center;padding:40px 10px;}
 .main>.panel{direction:rtl;}
@@ -354,11 +358,11 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:v
     font-size:12px;font-weight:500;font-family:inherit;
     cursor:pointer;direction:rtl;transition:all 0.25s;
     color:var(--text-dim);min-width:110px;justify-content:center;
-    background:rgba(15,23,42,0.75);backdrop-filter:blur(12px);
+    background:var(--bg2);backdrop-filter:blur(12px);
     border:1px solid var(--border);
 }
 .map-btn:hover{border-color:#64748b;color:var(--text);}
-.map-btn.active{background:rgba(30,41,59,0.9);border-color:#38bdf8;color:var(--text);}
+.map-btn.active{background:var(--bg2);border-color:var(--accent);color:var(--text);}
 .map-btn .btn-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0;}
 .map-btn.btn-polygon .btn-icon::after{content:'';width:9px;height:9px;background:#f59e0b;transform:rotate(45deg);border-radius:1.5px;opacity:0.6;transition:opacity 0.2s;}
 .map-btn.btn-polygon.active .btn-icon::after{opacity:1;box-shadow:0 0 6px rgba(245,158,11,0.5);}
@@ -368,6 +372,38 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:v
 .map-btn.btn-lines .btn-icon span{width:6px;height:2px;background:#4ade80;border-radius:1px;opacity:0.6;transition:opacity 0.2s;}
 .map-btn.btn-lines.active .btn-icon span{opacity:1;box-shadow:0 0 4px rgba(74,222,128,0.4);}
 
+/* Coordinate display */
+.coord-display{
+    position:absolute;bottom:8px;left:8px;z-index:1000;
+    background:rgba(15,23,42,0.9);backdrop-filter:blur(10px);
+    border:1px solid var(--border);border-radius:8px;
+    padding:6px 14px;font-size:12px;color:#cbd5e1;
+    direction:ltr;font-family:monospace;pointer-events:none;
+    display:flex;gap:16px;
+}
+.coord-display span{color:#fff;font-weight:600;}
+/* Address search */
+.address-search{
+    position:absolute;top:10px;left:10px;z-index:1000;
+    display:flex;gap:4px;
+}
+.address-input{
+    width:220px;padding:6px 10px;border-radius:8px;
+    border:1px solid var(--border);background:var(--bg2);
+    backdrop-filter:blur(8px);color:var(--text);font-size:12px;
+    font-family:inherit;direction:rtl;
+}
+.address-input:focus{outline:none;border-color:var(--accent);}
+.address-input::placeholder{color:var(--text-dim);}
+.address-btn{
+    padding:6px 10px;border-radius:8px;border:1px solid var(--border);
+    background:var(--bg2);backdrop-filter:blur(8px);
+    color:var(--text);font-size:12px;cursor:pointer;
+}
+.address-btn:hover{border-color:var(--accent);color:var(--accent);}
+.address-marker{
+    background:none;border:none;
+}
 /* 3D rotation controls */
 .rot-controls{
     position:absolute;bottom:20px;left:20px;z-index:1000;
@@ -440,7 +476,8 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:v
 
 <div class="navbar">
     <div class="navbar-right">
-        <img class="navbar-logo" src="data:image/png;base64,LOGO_B64" alt="Mahod">
+        <img class="navbar-logo logo-dark" src="data:image/png;base64,LOGO_DARK_B64" alt="Mahod">
+        <img class="navbar-logo logo-light" src="data:image/png;base64,LOGO_LIGHT_B64" alt="Mahod">
     </div>
     <div class="navbar-left">
         <div class="stat-box clickable" id="btn-reset" title="חזרה לתצוגת כל הפרויקטים"><div class="stat-num" id="st-total">0</div><div class="stat-label">פרויקטים</div></div>
@@ -453,12 +490,22 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:v
 </div>
 
 <div class="main">
-    <div class="panel-left">
-        <div class="placeholder">פאנל שמאלי - בקרוב</div>
+    <div class="panel-left" id="panel-left">
+        <div class="panel-title">התפלגות פרויקטים לפי קטגוריה</div>
+        <div class="info-card" style="padding:16px;"><canvas id="cat-chart"></canvas></div>
+        <div id="cat-stats"></div>
     </div>
 
     <div class="map-container">
         <div id="map" style="position:relative;">
+            <div class="address-search">
+                <input class="address-input" id="address-input" type="text" placeholder="חיפוש כתובת / מקום...">
+                <button class="address-btn" id="address-btn" title="חפש">🔍</button>
+            </div>
+            <div class="coord-display" id="coord-display">
+                <div>WGS84: <span id="coord-wgs">-</span></div>
+                <div>ITM: <span id="coord-itm">-</span></div>
+            </div>
             <div class="map-overlay" id="map-overlay">
                 <button class="map-btn btn-polygon active" id="mob-polygon"><span class="btn-icon"></span><span id="mob-label">תיחום</span></button>
                 <button class="map-btn btn-points" id="mob-points"><span class="btn-icon"></span>נקודות</button>
@@ -527,12 +574,67 @@ const plansByProject = PLANS_BY_PROJECT;
 const orthoTiles = ORTHO_TILES;
 
 // ── Map (top) ───────────────────────────────────────
-const map = L.map('map',{center:[31.5,35.0],zoom:8,zoomControl:true});
-const darkTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OSM & CARTO',maxZoom:19});
-const lightTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OSM & CARTO',maxZoom:19});
-const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:19});
+const map = L.map('map',{center:[31.5,35.0],zoom:8,zoomControl:true,maxZoom:22,scrollWheelZoom:true});
+const darkTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OSM & CARTO',maxZoom:22,maxNativeZoom:19});
+const lightTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OSM & CARTO',maxZoom:22,maxNativeZoom:19});
+const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:22,maxNativeZoom:19});
 darkTile.addTo(map);
 L.control.layers({'\u05db\u05d4\u05d4':darkTile,'\u05d1\u05d4\u05d9\u05e8':lightTile,'\u05dc\u05d5\u05d5\u05d9\u05df':sat},null,{position:'topright'}).addTo(map);
+
+// ── Coordinate display (WGS84 + ITM) ───────────────
+// Simple WGS84->ITM approximation (good enough for display)
+function wgs84ToItm(lat, lon) {
+    const latRad = lat * Math.PI / 180;
+    const lonRad = lon * Math.PI / 180;
+    const lat0 = 31.7343936111 * Math.PI / 180;
+    const lon0 = 35.2045169444 * Math.PI / 180;
+    const k0 = 1.0000067;
+    const a = 6378137;
+    const f = 1 / 298.257222101;
+    const e2 = 2*f - f*f;
+    const N = a / Math.sqrt(1 - e2 * Math.sin(latRad) * Math.sin(latRad));
+    const dLon = lonRad - lon0;
+    const dLat = latRad - lat0;
+    const x = 219529.584 + k0 * N * dLon * Math.cos(latRad);
+    const y = 626907.39 + k0 * N * dLat;
+    return { x: Math.round(x), y: Math.round(y) };
+}
+
+map.on('mousemove', (e) => {
+    const lat = e.latlng.lat.toFixed(6);
+    const lon = e.latlng.lng.toFixed(6);
+    const itm = wgs84ToItm(e.latlng.lat, e.latlng.lng);
+    document.getElementById('coord-wgs').textContent = lat + ', ' + lon;
+    document.getElementById('coord-itm').textContent = itm.x + ', ' + itm.y;
+});
+
+// ── Address/Place search (Nominatim) ────────────────
+let addressMarker = null;
+function searchAddress() {
+    const q = document.getElementById('address-input').value.trim();
+    if (!q) return;
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q + ' ישראל') + '&limit=1';
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.length) { alert('\u05dc\u05d0 \u05e0\u05de\u05e6\u05d0\u05d5 \u05ea\u05d5\u05e6\u05d0\u05d5\u05ea'); return; }
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            const name = data[0].display_name;
+            map.setView([lat, lon], 16);
+            if (addressMarker) map.removeLayer(addressMarker);
+            addressMarker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                    className: 'address-marker',
+                    html: '<div style="font-size:24px;text-shadow:0 0 6px rgba(0,0,0,0.5);">📍</div>',
+                    iconSize: [24, 24], iconAnchor: [12, 24]
+                })
+            }).addTo(map).bindPopup('<b>' + name.split(',').slice(0,3).join(',') + '</b>').openPopup();
+        })
+        .catch(() => alert('\u05e9\u05d2\u05d9\u05d0\u05d4 \u05d1\u05d7\u05d9\u05e4\u05d5\u05e9'));
+}
+document.getElementById('address-btn').addEventListener('click', searchAddress);
+document.getElementById('address-input').addEventListener('keydown', e => { if (e.key === 'Enter') searchAddress(); });
 
 // ── Vertical resizer between maps ───────────────────
 (function setupResizer(){
@@ -793,11 +895,9 @@ function updateStats(featList) {
     const total = featList.length;
     const open = featList.filter(f=>f.properties.Status==='\u05e4\u05ea\u05d5\u05d7').length;
     const closed = total - open;
-    const area = featList.reduce((s,f)=>s+(f.properties.Shape_Area||0),0);
     document.getElementById('st-total').textContent = total;
     document.getElementById('st-open').textContent = open;
     document.getElementById('st-closed').textContent = closed;
-    document.getElementById('st-area').textContent = area > 1000 ? Math.round(area/1000).toLocaleString() : Math.round(area).toLocaleString();
 }
 
 // ── Project list ────────────────────────────────────
@@ -1002,8 +1102,8 @@ function updateStatutory() {
     refresh3DLayers();
 
     if (!statChecked || !selectedProjectId) {
-        leftPanel.innerHTML = '<div class="placeholder">בחר פרויקט וסמן \"סטטוטוריקה\" כדי לראות מידע התכנית</div>';
         mavatFilterCodes = new Set();
+        updateLeftPanel();
         return;
     }
 
@@ -1168,16 +1268,9 @@ function updateInfra() {
 }
 
 // Category & infra listeners
-function updateLeftPanelVisibility() {
-    const anyChecked = Array.from(document.querySelectorAll('[data-cat]')).some(cb => cb.checked);
-    document.querySelector('.main').classList.toggle('no-left', !anyChecked);
-    setTimeout(() => { if (map && map.invalidateSize) map.invalidateSize(); }, 50);
-}
 document.querySelectorAll('[data-cat]').forEach(cb => cb.addEventListener('change', () => {
-    updateInfra(); updateStatutory(); updateLeftPanelVisibility();
+    updateInfra(); updateStatutory(); updateLeftPanel();
 }));
-// Initial: hide left panel since no category checked
-updateLeftPanelVisibility();
 document.querySelectorAll('[data-infra]').forEach(cb => cb.addEventListener('change', updateInfra));
 document.getElementById('show-lines').addEventListener('change', updateInfra);
 document.getElementById('show-points').addEventListener('change', updateInfra);
@@ -1187,7 +1280,6 @@ function resetView() {
     selectedProjectId = null;
     if (selectedMarker) { map.removeLayer(selectedMarker); selectedMarker = null; }
     if (statutoryLayer) { map.removeLayer(statutoryLayer); statutoryLayer = null; }
-    document.querySelector('.panel-left').innerHTML = '<div class="placeholder">פאנל שמאלי - בקרוב</div>';
     hideMapOverlay();
     document.getElementById('search').value = '';
     document.getElementById('info-card').innerHTML = '<div class="no-selection">\u05d1\u05d7\u05e8 \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05de\u05d4\u05e8\u05e9\u05d9\u05de\u05d4 \u05d0\u05d5 \u05de\u05d4\u05de\u05e4\u05d4</div>';
@@ -1195,8 +1287,27 @@ function resetView() {
     document.getElementById('infra-sub').classList.remove('visible');
     document.getElementById('show-lines').checked = true;
     document.getElementById('show-points').checked = true;
-    refresh();
-    updateLeftPanelVisibility();
+    mavatFilterCodes = new Set();
+    // Remove infra layers
+    activeInfraLayers.forEach(l => map.removeLayer(l));
+    activeInfraLayers = [];
+    document.getElementById('layer-count').textContent = '';
+    // Render projects on maps
+    const filtered = getFilteredProjects();
+    renderProjects(filtered);
+    renderList(filtered);
+    updateStats(filtered);
+    try { refresh3DLayers(); } catch(e) {}
+    // Restore chart in left panel after a short delay to ensure all async operations complete
+    setTimeout(() => {
+        try { if (catChart) catChart.destroy(); } catch(e) {}
+        catChart = null;
+        const panel = document.getElementById('panel-left');
+        if (panel) {
+            panel.innerHTML = '';
+            showCategoryChart();
+        }
+    }, 100);
 }
 document.getElementById('btn-reset').addEventListener('click', resetView);
 
@@ -1239,7 +1350,75 @@ themeToggle.addEventListener('click', () => {
 const savedTheme = localStorage.getItem('mhd-theme') || 'dark';
 if (savedTheme === 'light') applyTheme('light');
 
+// ── Left panel: category chart or statutory info ────
+const CHART_COLORS = ['#fb923c','#34d399','#818cf8','#4ade80','#22d3ee','#f472b6','#c084fc','#fbbf24','#38bdf8','#f87171','#a3e635','#e879f9'];
+let catChart = null;
+
+function showCategoryChart() {
+    console.log('showCategoryChart called');
+    const panel = document.getElementById('panel-left');
+    if (!panel) { console.error('panel-left not found!'); return; }
+    panel.innerHTML = `
+        <div class="panel-title">\u05d4\u05ea\u05e4\u05dc\u05d2\u05d5\u05ea \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8\u05d9\u05dd \u05dc\u05e4\u05d9 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4</div>
+        <div class="info-card" style="padding:16px;"><canvas id="cat-chart"></canvas></div>
+        <div id="cat-stats"></div>
+    `;
+    // Build category counts
+    const catMap = {};
+    projects.features.forEach(f => {
+        const c = f.properties.Category || '\u05dc\u05d0 \u05de\u05d5\u05d2\u05d3\u05e8';
+        catMap[c] = (catMap[c] || 0) + 1;
+    });
+    const sorted = Object.entries(catMap).sort((a,b) => b[1] - a[1]);
+    const labels = sorted.map(e => e[0].length > 20 ? e[0].substring(0,20)+'...' : e[0]);
+    const data = sorted.map(e => e[1]);
+    const colors = sorted.map((_,i) => CHART_COLORS[i % CHART_COLORS.length]);
+
+    try { if (catChart) catChart.destroy(); } catch(e) {}
+    catChart = null;
+    catChart = new Chart(document.getElementById('cat-chart'), {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{data: data, backgroundColor: colors, borderWidth: 0}]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {display: false},
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.label + ': ' + ctx.parsed + ' \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8\u05d9\u05dd'
+                    }
+                }
+            },
+            cutout: '55%'
+        }
+    });
+
+    // Stats list below chart
+    const statsHtml = sorted.map(([cat, count], i) => {
+        const color = CHART_COLORS[i % CHART_COLORS.length];
+        const pct = ((count / projects.features.length) * 100).toFixed(1);
+        return `<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:12px;">
+            <span style="width:10px;height:10px;background:${color};border-radius:50%;flex-shrink:0;"></span>
+            <span style="flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${cat}">${cat}</span>
+            <span style="color:var(--text-dim);font-size:11px;flex-shrink:0;">${count} (${pct}%)</span>
+        </div>`;
+    }).join('');
+    document.getElementById('cat-stats').innerHTML = `<div class="info-card" style="padding:8px;">${statsHtml}</div>`;
+}
+
+function updateLeftPanel() {
+    const anyChecked = Array.from(document.querySelectorAll('[data-cat]')).some(cb => cb.checked);
+    if (!anyChecked) {
+        showCategoryChart();
+    }
+    // When category is checked, updateStatutory/updateInfra handle the panel content
+}
+
 // ── Init ────────────────────────────────────────────
+showCategoryChart();
 refresh();
 </script>
 </body>
@@ -1258,7 +1437,8 @@ html = html.replace("POLYGON_SYMBOLOGY", polygon_sym_str)
 html = html.replace("ORTHO_TILES", ortho_tiles_str)
 html = html.replace("STATUTORY_DATA", statutory_str)
 html = html.replace("PLANS_BY_PROJECT", plans_by_project_str)
-html = html.replace("LOGO_B64", logo_b64)
+html = html.replace("LOGO_DARK_B64", logo_dark_b64)
+html = html.replace("LOGO_LIGHT_B64", logo_light_b64)
 html = html.replace("PROJECT_DATA", projects_str)
 html = html.replace("INFRA_GROUPS", infra_groups_str)
 html = html.replace("INFRA_GEOJSON", infra_geojson_str)
